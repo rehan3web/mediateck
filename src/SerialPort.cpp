@@ -23,19 +23,37 @@ namespace Mtk {
 
         m_portName = portName;
 
-        m_hPort = CreateFileA(
-            winPath.c_str(),
-            GENERIC_READ | GENERIC_WRITE,
-            0,                      // Exclusive access
-            nullptr,                // Default security
-            OPEN_EXISTING,
-            0,                      // Non-overlapped for tight deterministic timing
-            nullptr
-        );
+        // Windows virtual COM ports need a brief moment (20-100ms) for the driver
+        // to finish binding once SetupAPI registers the device.
+        // We retry up to 25 times (500ms total) to ensure smooth acquisition.
+        DWORD lastErr = 0;
+        for (int retry = 0; retry < 25; ++retry) {
+            m_hPort = CreateFileA(
+                winPath.c_str(),
+                GENERIC_READ | GENERIC_WRITE,
+                0,                      // Exclusive access
+                nullptr,                // Default security
+                OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL,  // Standard attribute
+                nullptr
+            );
+
+            if (m_hPort != INVALID_HANDLE_VALUE) {
+                break;
+            }
+
+            lastErr = GetLastError();
+            Sleep(20);
+        }
 
         if (m_hPort == INVALID_HANDLE_VALUE) {
-            DWORD err = GetLastError();
-            Logger::Debug("Failed to open " + portName + " (Win32 Error: " + std::to_string(err) + ")");
+            if (lastErr == ERROR_ACCESS_DENIED || lastErr == ERROR_SHARING_VIOLATION) {
+                Logger::Error("Failed to open " + portName + ": Access Denied / Port in use (Error " + std::to_string(lastErr) + ")");
+                Logger::Warn("Port is locked by another running software (e.g. Modem META, MetaGUI, or SP Flash Tool)!");
+                Logger::Warn("Please close Modem META / MetaGUI in Task Manager and retry.");
+            } else {
+                Logger::Error("Failed to open " + portName + " (Win32 Error: " + std::to_string(lastErr) + ")");
+            }
             return false;
         }
 
