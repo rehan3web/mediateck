@@ -229,7 +229,7 @@ namespace Mtk {
         return true;
     }
 
-    bool MtkHandshake::SendBootMetaCommand(uint32_t timeoutMs) {
+    bool MtkHandshake::SendBootMetaCommand(uint32_t /*timeoutMs*/) {
         Logger::Info("Sending direct CMD_BOOT_META (0xB7)...");
         if (!m_serial.WriteByte(CMD_BOOT_META)) {
             return false;
@@ -241,7 +241,7 @@ namespace Mtk {
         return true;
     }
 
-    bool MtkHandshake::SendAsciiMetaToken(uint32_t timeoutMs) {
+    bool MtkHandshake::SendAsciiMetaToken(uint32_t /*timeoutMs*/) {
         Logger::Info("Sending ASCII META Mode magic token ('METAMETA')...");
 
         const std::string tokens = "METAMETA\nREADY\n";
@@ -315,7 +315,7 @@ namespace Mtk {
     bool MtkHandshake::VerifyMetaMode(
         const std::string& metaPortName,
         std::string& outModemVer,
-        uint32_t timeoutMs
+        uint32_t /*timeoutMs*/
     ) {
         Logger::Info("Connecting to MediaTek META Mode port (" + metaPortName + ")...");
 

@@ -40,7 +40,9 @@ namespace Mtk {
         }
 
         std::string lower = name;
-        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
 
         if (lower.find("preloader") != std::string::npos) {
             return DevicePortType::PreloaderPort;
@@ -57,7 +59,9 @@ namespace Mtk {
 
     bool DeviceWatcher::ParseVidPid(const std::string& hwId, uint16_t& outVid, uint16_t& outPid) {
         std::string upper = hwId;
-        std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
+        std::transform(upper.begin(), upper.end(), upper.begin(), [](unsigned char c) {
+            return static_cast<char>(std::toupper(c));
+        });
 
         size_t vidPos = upper.find("VID_");
         size_t pidPos = upper.find("PID_");
