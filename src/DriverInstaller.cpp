@@ -16,7 +16,7 @@ namespace Mtk {
 
     // Embedded clean Windows 10/11 INF driver for MediaTek CDC-ACM (usbser.sys)
     static const char* EMBEDDED_INF_CONTENT = 
-R"(; ==============================================================================
+R"INF_RAW(; ==============================================================================
 ; MediaTek PreLoader & BootROM Modern USB VCOM Driver INF
 ; Targets: Windows 10 / Windows 11 (x64)
 ; Service: Uses native Microsoft-signed usbser.sys (No Code 39 / No Bad Image)
@@ -72,7 +72,7 @@ MTK_PRELOADER_Desc    = "MediaTek PreLoader USB VCOM Port"
 MTK_META_Desc         = "MediaTek META Mode USB VCOM Port"
 MOTO_PRELOADER_Desc   = "Motorola MediaTek PreLoader VCOM Port"
 MOTO_META_Desc        = "Motorola MediaTek Diagnostic Port"
-)";
+)INF_RAW";
 
     typedef BOOL (WINAPI *UpdateDriverFn)(
         HWND hwndParent,
