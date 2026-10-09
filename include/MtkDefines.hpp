@@ -5,9 +5,10 @@
 namespace Mtk {
 
     // ============================================================================
-    // USB Identification (MediaTek Inc.)
+    // USB Identification (MediaTek & Motorola)
     // ============================================================================
-    constexpr uint16_t MTK_USB_VID = 0x0E8D;
+    constexpr uint16_t MTK_USB_VID  = 0x0E8D; // MediaTek Inc.
+    constexpr uint16_t MOTO_USB_VID = 0x22B8; // Motorola Mobility LLC
 
     // Common MediaTek USB Product IDs
     constexpr uint16_t PID_BROM_USB_PORT       = 0x0003; // MediaTek USB Port (BootROM)
@@ -16,6 +17,10 @@ namespace Mtk {
     constexpr uint16_t PID_META_PORT_ALT1      = 0x2002; // MediaTek DA USB VCOM Port
     constexpr uint16_t PID_META_PORT_ALT2      = 0x2006; // MediaTek USB Modem Port
     constexpr uint16_t PID_META_PORT_ALT3      = 0x202D; // MediaTek High-Speed VCOM Port (META)
+
+    // Motorola specific MediaTek PIDs
+    constexpr uint16_t PID_MOTO_PRELOADER      = 0x2EC5; // Motorola MTK Preloader
+    constexpr uint16_t PID_MOTO_DIAG           = 0x2E76; // Motorola Diagnostic/META Port
 
     // ============================================================================
     // MediaTek BootROM / Preloader Handshake Sync Bytes

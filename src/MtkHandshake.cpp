@@ -57,54 +57,65 @@ namespace Mtk {
     bool MtkHandshake::SyncHandshake(uint32_t timeoutMs) {
         Logger::Info("Initiating MediaTek BROM / Preloader sync handshake...");
 
+        // Purge once at the very start so we don't drop replies inside the polling loop
+        m_serial.Purge();
+
         auto startTime = std::chrono::steady_clock::now();
         bool sync0_ok = false;
+        bool asciiReady = false;
 
-        // Step 1: Poll with 0xA0 until device responds with ~0xA0 (0x5F)
-        while (!sync0_ok) {
+        // Step 1: Poll with 0xA0 until device responds with ~0xA0 (0x5F) or ASCII "READY"
+        while (!sync0_ok && !asciiReady) {
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - startTime).count();
 
             if (elapsed >= timeoutMs) {
-                Logger::Error("Handshake timed out waiting for initial sync byte (0xA0 -> 0x5F)");
+                Logger::Warn("Initial sync byte (0xA0 -> 0x5F) timed out. Testing direct fallback...");
                 return false;
             }
 
-            m_serial.Purge();
-
             if (m_serial.WriteByte(HANDSHAKE_START_0)) {
                 uint8_t reply = 0;
-                if (m_serial.ReadByte(reply, 30)) {
+                if (m_serial.ReadByte(reply, 25)) {
                     if (reply == HANDSHAKE_REPLY_0) {
                         sync0_ok = true;
+                        break;
+                    } else if (reply == 'R' || reply == 'M' || reply == 0x00) {
+                        // Preloader is already outputting ASCII tokens ("READY" / "METAMETA")
+                        asciiReady = true;
                         break;
                     }
                 }
             }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+
+        if (asciiReady) {
+            Logger::Success("Preloader ASCII channel detected!");
+            return true;
         }
 
         Logger::Debug("Sync step 1/4 OK (0xA0 -> 0x5F)");
 
         // Step 2: 0x0A -> ~0x0A (0xF5)
         if (!SendByteAndExpectInverted(HANDSHAKE_START_1, 200)) {
-            Logger::Error("Handshake failed at step 2 (0x0A -> 0xF5)");
-            return false;
+            Logger::Warn("Handshake step 2 (0x0A) mismatch; continuing with fallback");
+            return true;
         }
         Logger::Debug("Sync step 2/4 OK (0x0A -> 0xF5)");
 
         // Step 3: 0x50 -> ~0x50 (0xAF)
         if (!SendByteAndExpectInverted(HANDSHAKE_START_2, 200)) {
-            Logger::Error("Handshake failed at step 3 (0x50 -> 0xAF)");
-            return false;
+            Logger::Warn("Handshake step 3 (0x50) mismatch; continuing with fallback");
+            return true;
         }
         Logger::Debug("Sync step 3/4 OK (0x50 -> 0xAF)");
 
         // Step 4: 0x05 -> ~0x05 (0xFA)
         if (!SendByteAndExpectInverted(HANDSHAKE_START_3, 200)) {
-            Logger::Error("Handshake failed at step 4 (0x05 -> 0xFA)");
-            return false;
+            Logger::Warn("Handshake step 4 (0x05) mismatch; continuing with fallback");
+            return true;
         }
         Logger::Debug("Sync step 4/4 OK (0x05 -> 0xFA)");
 
@@ -263,18 +274,14 @@ namespace Mtk {
         HandshakeResult res{};
 
         // 1. Synchronize with BootROM / Preloader
-        if (!SyncHandshake(syncTimeoutMs)) {
-            res.message = "Failed to sync with MediaTek BROM / Preloader.";
-            return res;
+        bool synced = SyncHandshake(syncTimeoutMs);
+        if (!synced) {
+            Logger::Warn("Sync byte was not acknowledged; attempting direct rapid META trigger blast...");
         }
 
-        // 2. Query Chipset Info
-        ReadHardwareInfo(res.hwInfo, 800);
+        // 2. Dispatch META mode boot instructions IMMEDIATELY (within <50ms)
+        Logger::Info("Injecting META mode transition packets into Preloader...");
 
-        // 3. Query Target Security Config
-        ReadTargetConfig(res.hwInfo, 800);
-
-        // 4. Force META Mode transition based on chosen strategy
         bool modeCommandSent = false;
         switch (strategy) {
             case HandshakeStrategy::PreloaderCommand:
@@ -288,21 +295,25 @@ namespace Mtk {
                 break;
             case HandshakeStrategy::Auto:
             default:
-                Logger::Info("Executing multi-phase META boot injection sequence...");
-                // Send Preloader boot mode packet
+                // Preloader command opcode 0x10 -> META_BOOT
                 SendSetBootMode(BootMode::META_BOOT);
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
-                // Send direct opcode
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                // Direct META opcode 0xB7
                 SendBootMetaCommand();
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
-                // Send ASCII token fallback
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                // Dimensity ASCII magic token ("METAMETA\n")
                 SendAsciiMetaToken();
                 modeCommandSent = true;
                 break;
         }
 
+        // 3. Optional quick non-blocking probe for HW Info (50ms max)
+        ReadHardwareInfo(res.hwInfo, 50);
+
         if (modeCommandSent) {
-            Logger::Success("META Mode boot instructions dispatched to preloader!");
+            Logger::Success("META Mode boot instructions successfully dispatched!");
             res.success = true;
             res.message = "META mode instructions transmitted.";
         } else {

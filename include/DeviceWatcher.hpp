@@ -16,7 +16,11 @@ namespace Mtk {
         DevicePortType type = DevicePortType::None;
 
         bool IsMtkDevice() const {
-            return vid == MTK_USB_VID;
+            return vid == MTK_USB_VID || vid == MOTO_USB_VID;
+        }
+
+        bool IsTargetDevice() const {
+            return vid == MTK_USB_VID || vid == MOTO_USB_VID;
         }
     };
 

@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo =====================================================================
-echo   Push MediaTek META Tool to GitHub (https://github.com/rehanweb3/mediateck)
+echo   Push MediaTek META Tool to GitHub (https://github.com/rehan3web/mediateck)
 echo =====================================================================
 echo.
 
@@ -25,9 +25,9 @@ if not exist ".git" (
 )
 
 :: 3. Configure Remote URL
-echo [*] Setting remote origin to https://github.com/rehanweb3/mediateck.git ...
+echo [*] Setting remote origin to https://github.com/rehan3web/mediateck.git ...
 git remote remove origin 2>nul
-git remote add origin https://github.com/rehanweb3/mediateck.git
+git remote add origin https://github.com/rehan3web/mediateck.git
 
 :: 4. Add files
 echo [*] Staging files...

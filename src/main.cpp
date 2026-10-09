@@ -92,12 +92,21 @@ void ListPorts() {
     std::cout << "--------------------------------------------------------------------------------\n\n";
 }
 
+void WaitExitPrompt() {
+    std::cout << "\n================================================================================" << std::endl;
+    std::cout << "  Execution finished. Press Enter to exit..." << std::endl;
+    std::cout << "================================================================================" << std::endl;
+    std::cin.clear();
+    std::string line;
+    std::getline(std::cin, line);
+}
+
 int main(int argc, char* argv[]) {
     Logger::Init();
     PrintBanner();
 
     std::string specifiedPort = "";
-    uint32_t baudRate = 115200;
+    uint32_t baudRate = 921600; // Fast baud rate used by MediaTek high-speed USB VCOM
     uint32_t timeoutSec = 60;
     HandshakeStrategy strategy = HandshakeStrategy::Auto;
     bool continuous = false;
@@ -108,9 +117,11 @@ int main(int argc, char* argv[]) {
 
         if (arg == "-h" || arg == "--help") {
             PrintUsage(argv[0]);
+            WaitExitPrompt();
             return 0;
         } else if (arg == "-l" || arg == "--list") {
             ListPorts();
+            WaitExitPrompt();
             return 0;
         } else if (arg == "-v" || arg == "--verbose") {
             Logger::SetVerbose(true);
@@ -156,7 +167,10 @@ int main(int argc, char* argv[]) {
 
             if (detectedDev.portName.empty()) {
                 Logger::Error("Timed out waiting for MediaTek device. Please verify cable, power state, and drivers.");
-                if (!continuous) return 1;
+                if (!continuous) {
+                    WaitExitPrompt();
+                    return 1;
+                }
                 std::this_thread::sleep_for(std::chrono::seconds(2));
                 continue;
             }
@@ -172,7 +186,10 @@ int main(int argc, char* argv[]) {
         SerialPort serial;
         if (!serial.Open(targetPort, baudRate)) {
             Logger::Error("Failed to open " + targetPort + ". Device may have detached or port is in use.");
-            if (!continuous) return 1;
+            if (!continuous) {
+                WaitExitPrompt();
+                return 1;
+            }
             std::this_thread::sleep_for(std::chrono::seconds(2));
             continue;
         }
@@ -186,7 +203,10 @@ int main(int argc, char* argv[]) {
 
         if (!res.success) {
             Logger::Error("META Mode transition failed: " + res.message);
-            if (!continuous) return 1;
+            if (!continuous) {
+                WaitExitPrompt();
+                return 1;
+            }
             continue;
         }
 
@@ -228,5 +248,6 @@ int main(int argc, char* argv[]) {
 
     } while (continuous);
 
+    WaitExitPrompt();
     return 0;
 }

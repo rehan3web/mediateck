@@ -181,6 +181,13 @@ namespace Mtk {
         auto startTime = std::chrono::steady_clock::now();
         uint32_t lastReportedSec = 0;
 
+        // Snapshot existing ports prior to device connection
+        std::vector<DeviceInfo> initialPorts = EnumerateAllPorts();
+        std::vector<std::string> initialNames;
+        for (const auto& p : initialPorts) {
+            initialNames.push_back(p.portName);
+        }
+
         while (true) {
             auto elapsedSec = static_cast<uint32_t>(
                 std::chrono::duration_cast<std::chrono::seconds>(
@@ -198,12 +205,26 @@ namespace Mtk {
                 }
             }
 
-            std::vector<DeviceInfo> ports = EnumerateMtkPorts();
-            for (const auto& dev : ports) {
-                // We are looking for BROM or Preloader port
-                if (dev.type == DevicePortType::BromPort ||
-                    dev.type == DevicePortType::PreloaderPort ||
-                    dev.type == DevicePortType::OtherMtkPort) {
+            std::vector<DeviceInfo> allCurrent = EnumerateAllPorts();
+
+            // 1. Check for specific MediaTek or Motorola matching ports
+            for (const auto& dev : allCurrent) {
+                if (dev.IsTargetDevice()) {
+                    return dev;
+                }
+            }
+
+            // 2. Check for any newly enumerated COM port (e.g. Motorola Moto G73 under USB Serial Device)
+            for (const auto& dev : allCurrent) {
+                bool wasPresent = false;
+                for (const auto& oldName : initialNames) {
+                    if (oldName == dev.portName) {
+                        wasPresent = true;
+                        break;
+                    }
+                }
+                if (!wasPresent) {
+                    Logger::Info("Detected newly attached USB device: " + dev.portName + " (" + dev.friendlyName + ")");
                     return dev;
                 }
             }
