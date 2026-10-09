@@ -17,6 +17,7 @@ set(SOURCES
     src/SerialPort.cpp
     src/DeviceWatcher.cpp
     src/MtkHandshake.cpp
+    src/DriverInstaller.cpp
 )
 
 set(HEADERS
@@ -25,6 +26,7 @@ set(HEADERS
     include/SerialPort.hpp
     include/DeviceWatcher.hpp
     include/MtkHandshake.hpp
+    include/DriverInstaller.hpp
 )
 
 add_executable(mtk_meta_tool ${SOURCES} ${HEADERS})

@@ -60,6 +60,8 @@ jobs:
           Write-Host "Found compiled executable at: $exePath"
           Copy-Item $exePath -Destination "dist/mtk_meta_tool.exe"
           Copy-Item "README.md" -Destination "dist/README.md"
+          Copy-Item "fix_driver.bat" -Destination "dist/fix_driver.bat"
+          Copy-Item -Recurse -Force "driver" -Destination "dist/driver"
 
           # Create ZIP bundle
           Compress-Archive -Path "dist/*" -DestinationPath "dist/mtk_meta_tool-windows-x64.zip" -Force

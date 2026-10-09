@@ -2,6 +2,7 @@
 #include "SerialPort.hpp"
 #include "DeviceWatcher.hpp"
 #include "MtkHandshake.hpp"
+#include "DriverInstaller.hpp"
 #include "Logger.hpp"
 
 #include <iostream>
@@ -33,8 +34,9 @@ void PrintBanner() {
 void PrintUsage(const char* progName) {
     std::cout << "Usage: " << progName << " [options]\n\n"
               << "Options:\n"
+              << "  -i, --install-driver     Auto-repair/install clean MediaTek driver (Fixes Code 39)\n"
               << "  -p, --port <COMx>        Manually specify target COM port (e.g. COM4)\n"
-              << "  -b, --baud <rate>        Set baud rate (default: 115200, fast: 921600)\n"
+              << "  -b, --baud <rate>        Set baud rate (default: 921600)\n"
               << "  -s, --strategy <type>    META strategy: auto (default), cmd, direct, token\n"
               << "  -t, --timeout <sec>      Timeout in seconds waiting for device (default: 60)\n"
               << "  -l, --list               List all currently detected COM / MTK ports and exit\n"
@@ -127,6 +129,10 @@ int main(int argc, char* argv[]) {
             Logger::SetVerbose(true);
         } else if (arg == "-c" || arg == "--continuous") {
             continuous = true;
+        } else if (arg == "-i" || arg == "--install-driver") {
+            DriverInstaller::FixPreloaderDriver();
+            WaitExitPrompt();
+            return 0;
         } else if ((arg == "-p" || arg == "--port") && i + 1 < argc) {
             specifiedPort = argv[++i];
         } else if ((arg == "-b" || arg == "--baud") && i + 1 < argc) {

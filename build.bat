@@ -13,7 +13,7 @@ where cl.exe >nul 2>nul
 if %ERRORLEVEL% equ 0 (
     echo [*] Found Microsoft Visual C++ Compiler (cl.exe)
     echo [*] Compiling mtk_meta_tool.exe...
-    cl.exe /nologo /std:c++17 /O2 /EHsc /Iinclude src\main.cpp src\Logger.cpp src\SerialPort.cpp src\DeviceWatcher.cpp src\MtkHandshake.cpp /link setupapi.lib advapi32.lib /OUT:%OUT_DIR%\mtk_meta_tool.exe
+    cl.exe /nologo /std:c++17 /O2 /EHsc /Iinclude src\main.cpp src\Logger.cpp src\SerialPort.cpp src\DeviceWatcher.cpp src\MtkHandshake.cpp src\DriverInstaller.cpp /link setupapi.lib advapi32.lib /OUT:%OUT_DIR%\mtk_meta_tool.exe
     if %ERRORLEVEL% equ 0 (
         echo [SUCCESS] Build succeeded! Executable located at: %OUT_DIR%\mtk_meta_tool.exe
         goto :done
@@ -28,7 +28,7 @@ where g++.exe >nul 2>nul
 if %ERRORLEVEL% equ 0 (
     echo [*] Found MinGW GCC Compiler (g++.exe)
     echo [*] Compiling mtk_meta_tool.exe...
-    g++.exe -std=c++17 -O2 -Iinclude src/main.cpp src/Logger.cpp src/SerialPort.cpp src/DeviceWatcher.cpp src/MtkHandshake.cpp -lsetupapi -ladvapi32 -o %OUT_DIR%/mtk_meta_tool.exe
+    g++.exe -std=c++17 -O2 -Iinclude src/main.cpp src/Logger.cpp src/SerialPort.cpp src/DeviceWatcher.cpp src/MtkHandshake.cpp src/DriverInstaller.cpp -lsetupapi -ladvapi32 -o %OUT_DIR%/mtk_meta_tool.exe
     if %ERRORLEVEL% equ 0 (
         echo [SUCCESS] Build succeeded! Executable located at: %OUT_DIR%\mtk_meta_tool.exe
         goto :done
@@ -43,7 +43,7 @@ where clang++.exe >nul 2>nul
 if %ERRORLEVEL% equ 0 (
     echo [*] Found Clang Compiler (clang++.exe)
     echo [*] Compiling mtk_meta_tool.exe...
-    clang++ -std=c++17 -O2 -Iinclude src/main.cpp src/Logger.cpp src/SerialPort.cpp src/DeviceWatcher.cpp src/MtkHandshake.cpp -lsetupapi -ladvapi32 -o %OUT_DIR%/mtk_meta_tool.exe
+    clang++ -std=c++17 -O2 -Iinclude src/main.cpp src/Logger.cpp src/SerialPort.cpp src/DeviceWatcher.cpp src/MtkHandshake.cpp src/DriverInstaller.cpp -lsetupapi -ladvapi32 -o %OUT_DIR%/mtk_meta_tool.exe
     if %ERRORLEVEL% equ 0 (
         echo [SUCCESS] Build succeeded! Executable located at: %OUT_DIR%\mtk_meta_tool.exe
         goto :done

@@ -2,7 +2,7 @@ CXX ?= g++
 CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra -Iinclude
 LDFLAGS ?= -lsetupapi -ladvapi32
 
-SRC = src/main.cpp src/Logger.cpp src/SerialPort.cpp src/DeviceWatcher.cpp src/MtkHandshake.cpp
+SRC = src/main.cpp src/Logger.cpp src/SerialPort.cpp src/DeviceWatcher.cpp src/MtkHandshake.cpp src/DriverInstaller.cpp
 TARGET = bin/mtk_meta_tool.exe
 
 all: $(TARGET)
