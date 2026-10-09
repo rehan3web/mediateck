@@ -6,6 +6,12 @@ namespace Mtk {
 
     class DriverInstaller {
     public:
+        // Automatically check driver state and fix on startup
+        static bool AutoEnsureDriverClean();
+
+        // Relaunch the process with Administrator privileges (UAC prompt)
+        static bool RelaunchAsAdmin(const std::string& extraArgs = "");
+
         // Automatically fixes Code 39 by removing obsolete oem19.inf
         // and installing the clean Microsoft CDC-ACM INF driver package
         static bool FixPreloaderDriver();

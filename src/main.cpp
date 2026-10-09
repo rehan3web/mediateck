@@ -152,6 +152,9 @@ int main(int argc, char* argv[]) {
         Logger::Info("Verbose packet logging ENABLED.");
     }
 
+    // Auto-verify and clean driver configuration (Fixes Code 39 automatically)
+    DriverInstaller::AutoEnsureDriverClean();
+
     do {
         std::string targetPort = specifiedPort;
 
