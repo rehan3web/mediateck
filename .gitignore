@@ -1,0 +1,22 @@
+# Build outputs
+bin/
+build/
+dist/
+*.exe
+*.obj
+*.o
+*.pdb
+*.ilk
+*.lib
+*.exp
+
+# Visual Studio / IDE temporary files
+.vs/
+*.sln
+*.vcxproj*
+*.user
+.vscode/
+
+# Logs and scratch
+*.log
+*.tmp

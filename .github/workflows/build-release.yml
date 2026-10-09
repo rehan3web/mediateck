@@ -1,0 +1,104 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Publish as GitHub Release?'
+        required: true
+        type: boolean
+        default: true
+      tag_name:
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Standalone Windows Binary
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build with MSVC (Static Runtime)
+        run: |
+          cmake --build build --config Release --parallel
+
+      - name: Package Release Assets
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+
+          # Locate compiled executable
+          $exePath = Get-ChildItem -Path build -Filter "mtk_meta_tool.exe" -Recurse | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $exePath) {
+              Write-Error "mtk_meta_tool.exe was not found in build directory!"
+              exit 1
+          }
+
+          Write-Host "Found compiled executable at: $exePath"
+          Copy-Item $exePath -Destination "dist/mtk_meta_tool.exe"
+          Copy-Item "README.md" -Destination "dist/README.md"
+
+          # Create ZIP bundle
+          Compress-Archive -Path "dist/*" -DestinationPath "dist/mtk_meta_tool-windows-x64.zip" -Force
+          Write-Host "Created dist/mtk_meta_tool-windows-x64.zip successfully!"
+
+      - name: Upload Build Artifact (Actions Tab)
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtk_meta_tool-windows-x64
+          path: dist/
+          if-no-files-found: error
+
+      - name: Determine Release Tag
+        id: release_meta
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -like "refs/tags/v*") {
+              $tag = $env:GITHUB_REF -replace "refs/tags/", ""
+              echo "tag=$tag" >> $env:GITHUB_OUTPUT
+              echo "should_release=true" >> $env:GITHUB_OUTPUT
+          } elseif ('${{ github.event_name }}' -eq 'workflow_dispatch' -and '${{ github.event.inputs.create_release }}' -eq 'true') {
+              $tag = '${{ github.event.inputs.tag_name }}'
+              echo "tag=$tag" >> $env:GITHUB_OUTPUT
+              echo "should_release=true" >> $env:GITHUB_OUTPUT
+          } else {
+              echo "should_release=false" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Publish GitHub Release
+        if: steps.release_meta.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_meta.outputs.tag }}
+          name: MediaTek META Mode Tool ${{ steps.release_meta.outputs.tag }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            dist/mtk_meta_tool.exe
+            dist/mtk_meta_tool-windows-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
